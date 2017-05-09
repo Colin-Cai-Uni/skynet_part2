@@ -11,6 +11,7 @@ class StealthConn(object):
         self.conn = conn
         self.key = None
         self.csprng = FortunaGenerator.AESGenerator()
+        self.ivs = set()
         self.hmac = None
         self.client = client
         self.server = server
@@ -37,14 +38,20 @@ class StealthConn(object):
 
     def send(self, data):
         if self.key:
-            # Encrypt the data using AES-256 with a CSPRNG-generated IV
-            cipher = AES.new(self.key, AES.MODE_CFB, self.csprng.pseudo_random_data(AES.block_size))
+            # Generate an IV via CSPRNG that has not already used in this peer-to-peer connection
+            iv = self.csprng.pseudo_random_data(AES.block_size);
+            while iv in self.ivs:
+                iv = self.csprng.pseudo_random_data(AES.block_size);
+            # Add the IV to the set of used IVs so that IVs are not re-used and to protect against replay attacks
+            self.ivs.add(iv)
+            # Encrypt the data using AES-256 with the IV
+            cipher = AES.new(self.key, AES.MODE_CFB, iv)
             encrypted_data = cipher.encrypt(data)
             # Calculate a HMAC for the encrypted data
             self.hmac.update(encrypted_data)
             message_hmac = self.hmac.hexdigest().encode()
-            # Append the HMAC to the encrypted data
-            encrypted_data = encrypted_data + message_hmac
+            # Append the HMAC to the encrypted data, prepend the IV to the message
+            encrypted_data = iv + encrypted_data + message_hmac
             if self.verbose:
                 print("Original data: {}".format(data))
                 print("Encrypted data: {}".format(repr(encrypted_data)))
@@ -65,16 +72,21 @@ class StealthConn(object):
 
         encrypted_data = self.conn.recv(pkt_len)
         if self.key:
-            cipher = AES.new(self.key, AES.MODE_CFB, self.csprng.pseudo_random_data(AES.block_size))
+            iv = encrypted_data[:AES.block_size]
+            # Verify the IV has not been used to protect against replay
+            if iv in self.ivs:
+                return b''
+            self.ivs.add(iv)
+            cipher = AES.new(self.key, AES.MODE_CFB, iv)
             given_hmac = encrypted_data[-64:]
             # Calculate the HMAC of the encrypted data
-            self.hmac.update(encrypted_data[:-64])
+            self.hmac.update(encrypted_data[AES.block_size:-64])
             message_hmac = self.hmac.hexdigest().encode()
             # Verify that the given and calculated HMACs actually agree
             if given_hmac != message_hmac:
-            	print("Tampering detected, closing connection.")
-            	self.conn.close()
-            data = cipher.decrypt(encrypted_data[:-64])
+                print("Tampering detected, closing connection.")
+                self.conn.close()
+            data = cipher.decrypt(encrypted_data[AES.block_size:-64])
             if self.verbose:
                 print("Receiving packet of length {}".format(pkt_len))
                 print("Encrypted data: {}".format(repr(encrypted_data)))
