@@ -1,4 +1,7 @@
 import os
+from Crypto.Signature import PKCS1_PSS
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
 
 # Instead of storing files on disk,
 # we'll save them in memory for simplicity
@@ -35,8 +38,17 @@ def verify_file(f):
     # TODO: For Part 2, you'll use public key crypto here
     # Naive verification by ensuring the first line has the "passkey"
     lines = f.split(bytes("\n", "ascii"), 1)
-    first_line = lines[0]
-    if first_line == bytes("Caesar", "ascii"):
+    first_line = lines.pop(0)
+    try:
+        size = int(first_line)
+    except ValueError:
+        return False
+    key = RSA.importKey(open('skynet.public').read())
+    f = bytes("\n", "ascii").join(lines)
+    h = SHA256.new()
+    h.update(f[:size])
+    verifier = PKCS1_PSS.new(key)
+    if verifier.verify(h, f[size:]):
         return True
     return False
 
