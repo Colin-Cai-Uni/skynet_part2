@@ -1,12 +1,15 @@
 import os
-
+from Crypto.Signature import PKCS1_PSS
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
 
 def sign_file(f):
-    # TODO: For Part 2, you'll use public key crypto here
-    # The existing scheme just ensures the updates start with the line 'Caesar'
-    # This is naive -- replace it with something better!
-    return bytes("Caesar\n", "ascii") + f
-
+    key = RSA.importKey(open("skynet.private").read())
+    h = SHA256.new()
+    h.update(f)
+    signer = PKCS1_PSS.new(key)
+    signature = signer.sign(h)
+    return bytes(str(len(f)) + "\n", "ascii") + f + signature
 
 if __name__ == "__main__":
     fn = input("Which file in pastebot.net should be signed? ")
