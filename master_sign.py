@@ -4,11 +4,16 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 
 def sign_file(f):
-    key = RSA.importKey(open("skynet.private").read())
+    # Hash the file
     h = SHA256.new()
     h.update(f)
+
+    # Sign the file using the private key
+    key = RSA.importKey(open("skynet.private").read())
     signer = PKCS1_PSS.new(key)
     signature = signer.sign(h)
+
+    # Prepend the file size and append the signature
     return bytes(str(len(f)) + "\n", "ascii") + f + signature
 
 if __name__ == "__main__":

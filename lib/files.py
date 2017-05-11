@@ -3,6 +3,14 @@ from Crypto.Signature import PKCS1_PSS
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 
+# Verification key
+verification_key = """ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMXG
+S37QSfTKnJrz5xX4tQbw9Kz+6Xkjd68ggLM74b0BYoP2RlUIGkZSWPoMWAXYU1k3
+NaDanBxIQGUC4eOKbNArXRFZz99ZA75u40I+T7fpyz7wptZsaJz+zLxwVS1xqTiJ
+oThADLPp8EQl0t/c92f3zeRrxQ4yWzaHNk1raGy2BlufkRuYLdbunSULsaw8kdTJ
+kwULAyOq033CqLLrJtr0JCiEgrASRWUFpbN+h+EwwltelSMpYwwLEusxU36JtJE7
+YVRev+bJAVd+KoBXdJp8KHK3PZQf73mCffaZHz6ZGvoUZs0CeV6I+T9kaVH3gwPp
+MgI2ZMLCGVl1gkvK8X"""
 # Instead of storing files on disk,
 # we'll save them in memory for simplicity
 filestore = {}
@@ -34,19 +42,21 @@ def upload_valuables_to_pastebot(fn):
 ###
 
 def verify_file(f):
-    # Verify the file was sent by the bot master
-    # TODO: For Part 2, you'll use public key crypto here
-    # Naive verification by ensuring the first line has the "passkey"
+    # Splits off the first line of the file and verifies that it is an integer
     lines = f.split(bytes("\n", "ascii"), 1)
     first_line = lines.pop(0)
+    f = bytes("\n", "ascii").join(lines)
     try:
         size = int(first_line)
     except ValueError:
         return False
-    key = RSA.importKey(open('skynet.public').read())
-    f = bytes("\n", "ascii").join(lines)
+
+    # Hash the file content but not the signature itself
     h = SHA256.new()
     h.update(f[:size])
+    
+    # Verify that the signature is valid for the file
+    key = RSA.importKey(verification_key)
     verifier = PKCS1_PSS.new(key)
     if verifier.verify(h, f[size:]):
         return True
