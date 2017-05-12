@@ -9,7 +9,7 @@ def sign_file(f):
     h.update(f)
 
     # Sign the file using the private key
-    key = RSA.importKey(open("skynet.private").read())
+    key = RSA.importKey(open("skynet_sign.private").read())
     signer = PKCS1_PSS.new(key)
     signature = signer.sign(h)
 
