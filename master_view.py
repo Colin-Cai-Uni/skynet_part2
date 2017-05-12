@@ -7,7 +7,7 @@ def decrypt_valuables(f):
     # The existing scheme uploads in plaintext
     # As such, we just convert it back to ASCII and print it out
     key = RSA.importKey(open('skynet_encrypt.private').read())
-    cipher = PKCS1_OAP.new(key)
+    cipher = PKCS1_OAEP.new(key)
     decrypted_master = cipher.decrypt(f) 
     print(decrypted_master)
 
