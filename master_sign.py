@@ -1,9 +1,20 @@
 import os
+#import time
 from Crypto.Signature import PKCS1_PSS
 from Crypto.Hash import SHA384
 from Crypto.PublicKey import RSA
 
 def sign_file(f):
+    # The commented out code below makes the function prepend an expiry timestamp
+    # messages are considered invalid past their expiry time
+    # the lifespan value of 60 is arbitrary and intended only as a proof of concept
+    # in practice, the lifespan value would be taken as an argument to the function
+    '''
+    # Prepend the expiration time
+    lifespan = 60
+    f = bytes(str(time.time() + lifespan) + "\n", "ascii") + f
+    '''
+
     # Hash the file
     h = SHA384.new()
     h.update(f)

@@ -1,4 +1,5 @@
 import os
+#import time
 from Crypto.Signature import PKCS1_PSS
 from Crypto.Hash import SHA384
 from Crypto.PublicKey import RSA
@@ -66,14 +67,29 @@ def upload_valuables_to_pastebot(fn):
 ###
 
 def verify_file(f):
-    # Split off the first line of the file and verifies that it is an integer
-    lines = f.split(bytes("\n", "ascii"), 1)
-    first_line = lines.pop(0)
-    f = bytes("\n", "ascii").join(lines)
+    # Split off the first line of the file and verify that it is an integer
+    lines = f.split(bytes("\n", "ascii"))
     try:
-        size = int(first_line)
+        size = int(lines.pop(0))
     except ValueError:
         return False
+
+    # The commented out code below makes the function check a prepended expiry timestamp
+    # messages are considered invalid past their expiry time
+    '''
+    # Read off the second line of the file and verify that it is a float
+    try:
+        expiration_time = float(lines[0])
+    except ValueError:
+        return False
+
+    # Verify that the file hasn't expired
+    if time.time() > expiration_time:
+        return False
+    '''
+
+    # Reassemble the file, sans the file size
+    f = bytes("\n", "ascii").join(lines)
 
     # Hash the file content but not the signature itself
     h = SHA384.new()
